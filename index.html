@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shishir — Portfolio</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500;600&display=swap');
+
+  /* ============================================
+     DESIGN TOKENS — edit these to restyle everything
+  ============================================ */
+  :root {
+    --red: #FE3C72;
+    --red-dark: #d42a5e;
+    --bg: #0f0f0f;
+    --bg2: #1a1a1a;
+    --bg3: #232323;
+    --text: #F5F0EB;
+    --muted: #999;
+    --border: rgba(255,255,255,0.08);
+    --card: rgba(255,255,255,0.04);
+    --font-serif: 'Playfair Display', serif;
+    --font-sans: 'Inter', sans-serif;
+  }
+
+  /* ============================================
+     RESET
+  ============================================ */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-weight: 300;
+    min-height: 100vh;
+    cursor: none;
+    overflow-x: hidden;
+  }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); border-radius: 2px; }
+
+  /* ============================================
+     CUSTOM CURSOR
+  ============================================ */
+  #cur {
+    position: fixed;
+    top: 0; left: 0;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity .2s;
+  }
+  #cur .dot {
+    width: 9px; height: 9px;
+    background: var(--red);
+    border-radius: 50%;
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    transition: all .15s;
+  }
+  #cur .lbl {
+    position: absolute;
+    top: 14px; left: 14px;
+    background: var(--red);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 20px;
+    white-space: nowrap;
+    opacity: 0;
+    transform: scale(.8);
+    transition: opacity .2s, transform .2s;
+    letter-spacing: .03em;
+  }
+  #cur.hov .lbl { opacity: 1; transform: scale(1); }
+  #cur.hov .dot { transform: translate(-50%, -50%) scale(1.5); }
+
+  /* ============================================
+     PAGE SYSTEM
+  ============================================ */
+  .page { display: none; min-height: 100vh; }
+  .page.active { display: block; }
+  #page-main { padding-bottom: 130px; }
+  #page-contact { display: none; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; text-align: center; position: relative; overflow: hidden; }
+  #page-contact.active { display: flex; }
+  #page-nope { display: none; flex-direction: column; align-items: center; padding: 52px 24px 100px; }
+  #page-nope.active { display: flex; }
+
+  /* ============================================
+     PROFILE HEADER
+     CUSTOMISE: Replace .photo-placeholder with <img src="YOUR_FRAMER_IMAGE_URL">
+  ============================================ */
+  .ph { position: relative; height: 500px; overflow: hidden; }
+  .photo-placeholder {
+    width: 100%; height: 100%;
+    background: linear-gradient(160deg, #1a0a0f 0%, #0f0f0f 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 14px; position: relative;
+  }
+  .photo-placeholder::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 55% 40%, rgba(254,60,114,.15) 0%, transparent 65%);
+  }
+  .av-ring {
+    width: 116px; height: 116px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(254,60,114,.5);
+    display: flex; align-items: center; justify-content: center;
+    position: relative; z-index: 1;
+  }
+  .av-in {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: var(--bg3);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-serif);
+    font-size: 36px; color: var(--red);
+  }
+  .photo-hint { font-size: 11px; color: rgba(255,255,255,.25); letter-spacing: .1em; text-transform: uppercase; position: relative; z-index: 1; }
+  .ph-grad { position: absolute; bottom: 0; left: 0; right: 0; height: 180px; background: linear-gradient(to top, var(--bg) 0%, transparent 100%); }
+  .pi { position: absolute; bottom: 24px; left: 24px; right: 24px; }
+  .pname { font-family: var(--font-serif); font-size: 40px; font-weight: 400; line-height: 1.1; }
+  .pmeta { display: flex; align-items: center; gap: 14px; margin-top: 6px; font-size: 14px; color: var(--muted); }
+  .dot-s { color: rgba(255,255,255,.18); }
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: rgba(254,60,114,.12);
+    border: 1px solid rgba(254,60,114,.3);
+    color: var(--red);
+    font-size: 11px; font-weight: 600;
+    padding: 4px 12px; border-radius: 20px;
+    margin-top: 10px; letter-spacing: .05em; text-transform: uppercase;
+  }
+
+  /* ============================================
+     PROFILE BODY
+  ============================================ */
+  .pb { padding: 0 20px; max-width: 520px; margin: 0 auto; }
+  .divider { height: .5px; background: var(--border); margin: 28px 0; }
+  .slabel { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 16px; }
+
+  /* ============================================
+     BASICS PILLS
+     CUSTOMISE: Edit text inside each .pill
+  ============================================ */
+  .basics { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0; }
+  .pill { display: flex; align-items: center; gap: 7px; background: var(--bg2); border: .5px solid var(--border); border-radius: 20px; padding: 7px 14px; font-size: 13px; color: var(--muted); }
+
+  /* ============================================
+     ABOUT & LOOKING FOR CARDS
+     CUSTOMISE: Edit text inside .about-t
+  ============================================ */
+  .about-card { background: var(--card); border: .5px solid var(--border); border-radius: 18px; padding: 22px 20px; margin-bottom: 14px; }
+  .about-q { font-family: var(--font-serif); font-size: 14px; font-style: italic; color: rgba(255,255,255,.4); margin-bottom: 10px; }
+  .about-t { font-size: 15.5px; line-height: 1.7; color: var(--text); font-weight: 300; }
+
+  /* ============================================
+     PROMPT CARDS
+     CUSTOMISE: Edit .pq (question) and .pa (answer) in each card
+  ============================================ */
+  .pc {
+    background: var(--card);
+    border: .5px solid var(--border);
+    border-radius: 18px;
+    padding: 22px 20px 44px;
+    margin-bottom: 14px;
+    cursor: none;
+    transition: border-color .25s, background .25s;
+    position: relative; overflow: hidden;
+  }
+  .pc::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(254,60,114,.07) 0%, transparent 60%);
+    opacity: 0; transition: opacity .3s; pointer-events: none;
+  }
+  .pc:hover { border-color: rgba(254,60,114,.4); background: rgba(255,255,255,.06); }
+  .pc:hover::after { opacity: 1; }
+  .plabel { font-size: 10px; color: var(--red); letter-spacing: .12em; text-transform: uppercase; font-weight: 600; margin-bottom: 10px; }
+  .pq { font-family: var(--font-serif); font-size: 15.5px; font-style: italic; color: rgba(255,255,255,.55); margin-bottom: 10px; line-height: 1.5; }
+  .pa { font-size: 16.5px; font-weight: 400; color: var(--text); line-height: 1.55; letter-spacing: -.01em; }
+  .parr { position: absolute; right: 18px; bottom: 16px; width: 30px; height: 30px; border-radius: 50%; border: .5px solid rgba(255,255,255,.12); display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--muted); transition: all .2s; }
+  .pc:hover .parr { border-color: var(--red); color: var(--red); background: rgba(254,60,114,.1); }
+
+  /* ============================================
+     TAGS
+     CUSTOMISE: Add/remove .tag elements, add .on class for highlighted tags
+  ============================================ */
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+  .tag { background: var(--bg2); border: .5px solid var(--border); border-radius: 20px; padding: 7px 14px; font-size: 13px; color: var(--muted); }
+  .tag.on { background: rgba(254,60,114,.1); border-color: rgba(254,60,114,.4); color: var(--red); }
+
+  /* ============================================
+     INSTAGRAM SECTION
+     CUSTOMISE: Replace ig-av initials with <img src="YOUR_FRAMER_PFP_URL">
+     CUSTOMISE: Replace reel <img src> with YOUR_FRAMER_REEL_THUMBNAIL_URL
+     CUSTOMISE: Update href links and view counts
+  ============================================ */
+  .ig-card { background: var(--card); border: .5px solid var(--border); border-radius: 18px; padding: 22px 20px; margin-bottom: 14px; }
+  .ig-profile { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+  .ig-av { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-size: 20px; color: #fff; flex-shrink: 0; overflow: hidden; }
+  .ig-av img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+  .ig-name { font-size: 16px; font-weight: 500; }
+  .ig-handle { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .ig-follow { background: var(--red); color: #fff; border: none; border-radius: 8px; padding: 7px 18px; font-size: 13px; font-weight: 600; font-family: var(--font-sans); cursor: none; text-decoration: none; transition: background .2s; }
+  .ig-follow:hover { background: var(--red-dark); }
+  .ig-stats { display: flex; gap: 8px; margin-bottom: 18px; }
+  .ig-stat { flex: 1; text-align: center; padding: 12px 0; border: .5px solid var(--border); border-radius: 10px; }
+  .ig-stat .n { font-size: 17px; font-weight: 600; color: var(--text); }
+  .ig-stat .l { font-size: 11px; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: .06em; }
+  .reels-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .reel-slot { aspect-ratio: 9/16; background: var(--bg3); border-radius: 10px; overflow: hidden; position: relative; border: .5px solid var(--border); display: block; text-decoration: none; }
+  .reel-slot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .reel-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 8px; background: linear-gradient(to top, rgba(0,0,0,.85) 0%, transparent 100%); }
+  .reel-views { font-size: 12px; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 4px; }
+
+  /* ============================================
+     ACTION BAR
+  ============================================ */
+  .abar { position: fixed; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, #0f0f0f 70%, transparent); padding: 20px 20px 36px; display: flex; align-items: center; justify-content: center; gap: 48px; z-index: 100; }
+  .abtn { width: 64px; height: 64px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; cursor: none; transition: transform .15s; position: relative; }
+  .abtn:active { transform: scale(.9); }
+  .btn-x { background: var(--bg3); border: 1.5px solid rgba(255,255,255,.1); }
+  .btn-h { background: var(--red); box-shadow: 0 6px 28px rgba(254,60,114,.45); width: 74px; height: 74px; }
+  .btn-h:hover { box-shadow: 0 8px 36px rgba(254,60,114,.65); }
+  .ablbl { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); font-size: 10px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); white-space: nowrap; font-weight: 500; }
+
+  /* ============================================
+     CASE STUDY MODAL
+  ============================================ */
+  .moverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.9); z-index: 500; align-items: flex-end; justify-content: center; }
+  .moverlay.open { display: flex; }
+  .msheet { background: #181818; border-radius: 24px 24px 0 0; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; padding: 0 0 48px; animation: up .35s cubic-bezier(.32,.72,0,1); }
+  @keyframes up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .mhandle { width: 36px; height: 4px; background: rgba(255,255,255,.12); border-radius: 2px; margin: 14px auto 0; }
+  .mhdr { padding: 20px 22px 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+  .mcls { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,.06); border: none; color: var(--muted); font-size: 17px; cursor: none; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; transition: background .2s; }
+  .mcls:hover { background: rgba(255,255,255,.12); }
+  .mq { font-family: var(--font-serif); font-size: 12px; font-style: italic; color: rgba(255,255,255,.35); line-height: 1.4; }
+  .mt { font-family: var(--font-serif); font-size: 21px; font-weight: 500; line-height: 1.25; color: var(--text); margin-top: 6px; }
+  .mbody { padding: 22px 22px 0; }
+  .ctags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+  .ctag { background: rgba(254,60,114,.1); border: .5px solid rgba(254,60,114,.3); color: var(--red); font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 12px; }
+  .csec { margin-bottom: 22px; }
+  .csl { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--red); font-weight: 600; margin-bottom: 8px; }
+  .cst { font-size: 15px; line-height: 1.65; color: rgba(255,255,255,.72); font-weight: 300; }
+  .impact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 16px 0; }
+  .impact-num { background: rgba(254,60,114,.08); border: .5px solid rgba(254,60,114,.25); border-radius: 14px; padding: 14px 12px; text-align: center; }
+  .impact-n { font-size: 22px; font-weight: 700; color: var(--red); line-height: 1; letter-spacing: -.02em; }
+  .impact-l { font-size: 11px; color: rgba(255,255,255,.5); margin-top: 5px; line-height: 1.3; font-weight: 400; }
+  /* CUSTOMISE: Replace media-slot placeholders with <img src="YOUR_FRAMER_IMAGE_URL"> inside each .media-slot */
+  .media-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0; }
+  .media-slot { background: var(--bg3); border-radius: 12px; aspect-ratio: 16/9; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; border: .5px solid var(--border); overflow: hidden; }
+  .media-hint { font-size: 10px; color: rgba(255,255,255,.2); text-align: center; padding: 8px; letter-spacing: .05em; }
+  .media-icon { font-size: 20px; opacity: .3; }
+  .cresult { background: rgba(254,60,114,.07); border-left: 2px solid var(--red); border-radius: 0 12px 12px 0; padding: 14px 16px; font-size: 15px; line-height: 1.65; color: rgba(255,255,255,.78); font-style: italic; }
+
+  /* ============================================
+     CONTACT PAGE
+     CUSTOMISE: Update email, IG handle, LinkedIn URL
+  ============================================ */
+  .cglow { position: absolute; width: 320px; height: 320px; border-radius: 50%; background: radial-gradient(circle, rgba(254,60,114,.14) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; }
+  .cheart { font-size: 54px; margin-bottom: 18px; animation: hb 1.4s ease infinite; }
+  @keyframes hb { 0%,100%{transform:scale(1)} 14%{transform:scale(1.15)} 28%{transform:scale(1)} 42%{transform:scale(1.1)} 56%{transform:scale(1)} }
+  .chd { font-family: var(--font-serif); font-size: 34px; font-weight: 400; line-height: 1.2; margin-bottom: 12px; }
+  .csub { font-size: 15px; color: var(--muted); max-width: 280px; line-height: 1.65; margin-bottom: 36px; font-weight: 300; }
+  .clinks { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 300px; }
+  .clink { display: flex; align-items: center; gap: 14px; background: var(--bg2); border: .5px solid var(--border); border-radius: 14px; padding: 16px 20px; text-decoration: none; color: var(--text); font-size: 14px; font-weight: 400; transition: border-color .2s, background .2s; cursor: none; }
+  .clink:hover { border-color: rgba(254,60,114,.4); background: var(--bg3); }
+  .ci { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .ci-email { background: rgba(254,60,114,.15); }
+  .ci-ig { background: linear-gradient(135deg, rgba(240,148,51,.2), rgba(188,24,136,.2)); }
+  .ci-li { background: rgba(55,136,221,.15); }
+  .cl-lbl { flex: 1; text-align: left; }
+  .cl-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .backbtn { margin-top: 32px; background: none; border: none; color: var(--muted); font-size: 13px; cursor: none; font-family: var(--font-sans); display: flex; align-items: center; gap: 6px; transition: color .2s; }
+  .backbtn:hover { color: var(--text); }
+
+  /* ============================================
+     NOT CONVINCED / COMMENTS PAGE
+     CUSTOMISE: Replace comment cards with real comments from your reels
+  ============================================ */
+  .nhead { font-family: var(--font-serif); font-size: 26px; font-weight: 400; text-align: center; line-height: 1.3; margin-bottom: 10px; }
+  .nsub { font-size: 15px; color: var(--muted); text-align: center; margin-bottom: 36px; font-weight: 300; line-height: 1.65; max-width: 300px; }
+  .comments-wrap { width: 100%; max-width: 460px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px; }
+  .comment-card { background: var(--card); border: .5px solid var(--border); border-radius: 16px; padding: 16px 18px; }
+  .comment-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .comment-av { width: 34px; height: 34px; border-radius: 50%; background: var(--bg3); border: .5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; color: var(--red); font-weight: 600; }
+  .comment-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .comment-src { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .comment-text { font-size: 14px; line-height: 1.6; color: rgba(255,255,255,.75); font-weight: 300; }
+  .comment-likes { font-size: 11px; color: var(--red); margin-top: 8px; font-weight: 500; }
+  .ncta { background: var(--red); color: #fff; border: none; border-radius: 30px; padding: 15px 40px; font-size: 15px; font-weight: 600; font-family: var(--font-sans); cursor: none; transition: box-shadow .2s, transform .15s; box-shadow: 0 6px 28px rgba(254,60,114,.38); letter-spacing: .01em; margin-top: 8px; }
+  .ncta:hover { box-shadow: 0 8px 36px rgba(254,60,114,.58); }
+  .ncta:active { transform: scale(.97); }
+</style>
+</head>
+<body>
+
+<div id="cur"><div class="dot"></div><div class="lbl" id="clbl">That's so hot 🔥</div></div>
+
+<!-- MODAL -->
+<div class="moverlay" id="modal">
+  <div class="msheet">
+    <div class="mhandle"></div>
+    <div class="mhdr">
+      <div>
+        <div class="mq" id="mq"></div>
+        <div class="mt" id="mt"></div>
+      </div>
+      <button class="mcls" onclick="closeMod()">✕</button>
+    </div>
+    <div class="mbody" id="mbody"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MAIN PAGE
+============================================================ -->
+<div class="page active" id="page-main">
+
+  <!-- HEADER PHOTO
+       CUSTOMISE: Replace the entire .photo-placeholder div with:
+       <img src="YOUR_FRAMER_PHOTO_URL" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0">
+  -->
+  <div class="ph">
+    <div class="photo-placeholder">
+      <div class="av-ring"><div class="av-in">S</div></div>
+      <span class="photo-hint">Add your photo here</span>
+    </div>
+    <div class="ph-grad"></div>
+    <div class="pi">
+      <div class="pname">Shishir</div>
+      <div class="pmeta">
+        <span>8 yrs exp</span><span class="dot-s">·</span>
+        <span>Mumbai</span><span class="dot-s">·</span>
+        <span>Content Strategist</span>
+      </div>
+      <div class="badge">✓ &nbsp;Open to collabs</div>
+    </div>
+  </div>
+
+  <div class="pb">
+
+    <!-- BASICS PILLS — CUSTOMISE: Edit text -->
+    <div class="basics">
+      <div class="pill">💼 Content Strategy</div>
+      <div class="pill">🎬 Short-form Video</div>
+      <div class="pill">🔍 Freelance & Full-time</div>
+      <div class="pill">🌍 Remote-friendly</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- BIO — CUSTOMISE: Edit .about-t text -->
+    <div class="slabel">About</div>
+    <div class="about-card">
+      <div class="about-q">My self-summary</div>
+      <div class="about-t">I've spent the last 8 years satisfying a mischievous inner child by making things people actually want to watch. I'm not the hero of these stories, the content is. I'm just the guy who does not want to get an abortion and kill his inner child and wants to create content people stop for, just like I stop myself from jumping off a cliff.</div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="slabel">Prompts (tap to read the case study)</div>
+
+    <!-- PROMPT CARDS — CUSTOMISE: Edit .pq and .pa in each card -->
+    <div class="pc" onclick="openCase(0)" data-p>
+      <div class="plabel">Prompt</div>
+      <div class="pq">"Dating me is like…"</div>
+      <div class="pa">handing Duolingo the algorithm and hoping for the best.</div>
+      <div class="parr">↗</div>
+    </div>
+
+    <div class="pc" onclick="openCase(1)" data-p>
+      <div class="plabel">Prompt</div>
+      <div class="pq">"My most controversial opinion…"</div>
+      <div class="pa">Free Fire Max hate was just unpaid marketing (opportunity).</div>
+      <div class="parr">↗</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- INTERESTS — CUSTOMISE: Add/remove tags -->
+    <div class="slabel">Interests</div>
+    <div class="tags">
+      <div class="tag on">🎬 Viral Content</div>
+      <div class="tag on">🎮 Gaming Culture</div>
+      <div class="tag">🎙️ Brand Storytelling</div>
+      <div class="tag">📱 Creator Economy</div>
+      <div class="tag">🎵 Music Drops</div>
+      <div class="tag">🏏 Cricket</div>
+      <div class="tag">☕ Chai supremacist</div>
+      <div class="tag">🐦‍🔥 Chaos enjoyer</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="pc" onclick="openCase(2)" data-p>
+      <div class="plabel">Prompt</div>
+      <div class="pq">"Together, we could…"</div>
+      <div class="pa">turn CookieRun India into a creator, not just a game.</div>
+      <div class="parr">↗</div>
+    </div>
+
+    <div class="pc" onclick="openCase(3)" data-p>
+      <div class="plabel">Prompt</div>
+      <div class="pq">"I won't shut up about…"</div>
+      <div class="pa">how I made people feel personally attacked by Jeevansathi content.</div>
+      <div class="parr">↗</div>
+    </div>
+
+    <div class="pc" onclick="openCase(4)" data-p>
+      <div class="plabel">Prompt</div>
+      <div class="pq">"Biggest risk I've taken…"</div>
+      <div class="pa">trying to write unhinged and witty content for a pharma giant like Lupin Life without crossing the line.</div>
+      <div class="parr">↗</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- SKILLS — CUSTOMISE: Add/remove tags -->
+    <div class="slabel">Skills</div>
+    <div class="tags">
+      <div class="tag">📋 Content Strategy</div>
+      <div class="tag">✍️ Copywriting</div>
+      <div class="tag">📱 Social Media</div>
+      <div class="tag">🎬 Scriptwriting</div>
+      <div class="tag">🏀 Elite ball knowledge</div>
+      <div class="tag">🧠 Brainrot</div>
+      <div class="tag">💫 Delulu</div>
+      <div class="tag">🐐 Gooner</div>
+      <div class="tag">🔥 Cooked</div>
+      <div class="tag">🎯 Moment Marketing</div>
+      <div class="tag">🤝 Creator Collabs</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="pc" onclick="openCase(5)" data-p>
+      <div class="plabel">Prompt</div>
+      <div class="pq">"The key to my heart is…"</div>
+      <div class="pa">you picking up my lingo, just like the millions who watched Under 25 Dictionary reels.</div>
+      <div class="parr">↗</div>
+    </div>
+
+    <div class="pc" onclick="openCase(6)" data-p>
+      <div class="plabel">Prompt</div>
+      <div class="pq">"My toxic trait…"</div>
+      <div class="pa">treating every launch like it's a Honey Singh comeback.</div>
+      <div class="parr">↗</div>
+    </div>
+
+    <div class="pc" onclick="openCase(7)" data-p>
+      <div class="plabel">Prompt</div>
+      <div class="pq">"Dating me is like…"</div>
+      <div class="pa">fast, consistent, and actually going somewhere. Ask BGMI (or Bombay Shaving Company 🤷).</div>
+      <div class="parr">↗</div>
+    </div>
+
+    <div class="pc" onclick="openCase(8)" data-p>
+      <div class="plabel">Prompt</div>
+      <div class="pq">"The dorkiest thing about me is…"</div>
+      <div class="pa">I made Bobble AI everyone's digital wingman.</div>
+      <div class="parr">↗</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- INSTAGRAM SECTION
+         CUSTOMISE: Replace ig-av initials with <img src="YOUR_FRAMER_PFP_URL" style="width:100%;height:100%;object-fit:cover">
+         CUSTOMISE: Replace each reel <img src> with your Framer-hosted thumbnail URL
+         CUSTOMISE: Update href on each .reel-slot and .ig-follow
+         CUSTOMISE: Update view counts in .reel-views
+    -->
+    <div class="slabel">Find me on Instagram</div>
+    <div class="ig-card">
+      <div class="ig-profile">
+        <div class="ig-av">
+          <!-- CUSTOMISE: Replace with <img src="YOUR_FRAMER_PFP_URL" style="width:100%;height:100%;object-fit:cover"> -->
+          S
+        </div>
+        <div style="flex:1;margin-left:14px">
+          <div class="ig-name">Shishir Jha</div>
+          <div class="ig-handle">@shishirrjhaa</div>
+        </div>
+        <a href="https://www.instagram.com/shishirrjhaa/" target="_blank" class="ig-follow">Follow</a>
+      </div>
+      <div class="ig-stats">
+        <div class="ig-stat"><div class="n">100M+</div><div class="l">Views</div></div>
+        <div class="ig-stat"><div class="n">8+</div><div class="l">Years</div></div>
+        <div class="ig-stat"><div class="n">10+</div><div class="l">Brands</div></div>
+      </div>
+      <div class="reels-grid">
+        <a href="https://www.instagram.com/reel/C8M0P5FI7z9/" target="_blank" class="reel-slot">
+          <!-- CUSTOMISE: Replace with <img src="YOUR_FRAMER_REEL1_THUMBNAIL"> -->
+          <img src="https://i.postimg.cc/q7215rK4/e36f560a-a98c-4e7a-9893-9e7e9b9efe24.jpg" alt="Where do you see yourself in 5 years?">
+          <div class="reel-overlay"><div class="reel-views">▶ 38.8M+</div></div>
+        </a>
+        <a href="https://www.instagram.com/p/C2zt6vtI9L4/" target="_blank" class="reel-slot">
+          <!-- CUSTOMISE: Replace with <img src="YOUR_FRAMER_REEL2_THUMBNAIL"> -->
+          <img src="https://i.postimg.cc/htT8SrGF/c88cd1b1-d9ab-44b4-8c1d-47f0c7c5ba2c.jpg" alt="Stone Paper Scissor">
+          <div class="reel-overlay"><div class="reel-views">▶ 13.2M+</div></div>
+        </a>
+        <a href="https://www.instagram.com/reel/C6OUxW2IpB1/" target="_blank" class="reel-slot">
+          <!-- CUSTOMISE: Replace with <img src="YOUR_FRAMER_REEL3_THUMBNAIL"> -->
+          <img src="REEL3_FRAMER_URL" alt="Love you nani">
+          <div class="reel-overlay"><div class="reel-views">▶ 6.9M+</div></div>
+        </a>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- LOOKING FOR — CUSTOMISE: Edit .about-t text -->
+    <div class="slabel">What I'm looking for</div>
+    <div class="about-card">
+      <div class="about-q">I'm looking for someone who…</div>
+      <div class="about-t">Trusts the chaos. Values the craft. And knows the best briefs start with a problem worth solving, not a template worth filling. If you read the copy before you look at the design, we'll get along just fine.</div>
+    </div>
+
+  </div>
+
+  <div class="abar">
+    <button class="abtn btn-x" onclick="showPage('nope')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      <span class="ablbl">Not sure</span>
+    </button>
+    <button class="abtn btn-h" onclick="showPage('contact')">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      <span class="ablbl">Let's connect</span>
+    </button>
+  </div>
+</div>
+
+<!-- ============================================================
+     CONTACT PAGE
+     CUSTOMISE: Update email, IG, LinkedIn links and labels
+============================================================ -->
+<div class="page" id="page-contact">
+  <div class="cglow"></div>
+  <div class="cheart">❤️</div>
+  <div class="chd">It's a match.<br>Let's make something.</div>
+  <div class="csub">You've got great taste. I'm glad we found each other. Let's build something worth talking about.</div>
+  <div class="clinks">
+    <a href="mailto:shishir@email.com" class="clink"><!-- CUSTOMISE: Your email -->
+      <div class="ci ci-email">✉️</div>
+      <div class="cl-lbl"><div>Email me</div><div class="cl-sub">shishir@email.com</div></div><!-- CUSTOMISE -->
+      <span style="color:var(--muted);font-size:16px">›</span>
+    </a>
+    <a href="https://www.instagram.com/shishirrjhaa/" target="_blank" class="clink">
+      <div class="ci ci-ig" style="font-size:16px">📷</div>
+      <div class="cl-lbl"><div>Instagram</div><div class="cl-sub">@shishirrjhaa</div></div>
+      <span style="color:var(--muted);font-size:16px">›</span>
+    </a>
+    <a href="#" class="clink"><!-- CUSTOMISE: Your LinkedIn -->
+      <div class="ci ci-li" style="font-size:13px;font-weight:700;color:#378add">in</div>
+      <div class="cl-lbl"><div>LinkedIn</div><div class="cl-sub">linkedin.com/in/shishir</div></div><!-- CUSTOMISE -->
+      <span style="color:var(--muted);font-size:16px">›</span>
+    </a>
+  </div>
+  <button class="backbtn" onclick="showPage('main')">← Back to profile</button>
+</div>
+
+<!-- ============================================================
+     NOT CONVINCED PAGE
+     CUSTOMISE: Replace comment cards with real comments from your reels
+============================================================ -->
+<div class="page" id="page-nope">
+  <div style="font-size:38px;margin-bottom:16px">🤨</div>
+  <div class="nhead">It's okay, I think you have already heard<br>the rumours and allegations about me.</div>
+  <div class="nsub">Here's what the real judges had to say.</div>
+
+  <div class="comments-wrap">
+    <!-- CUSTOMISE: Replace each comment-card with a real comment -->
+    <div class="comment-card">
+      <div class="comment-top">
+        <div class="comment-av">A</div>
+        <div>
+          <div class="comment-name">@user_handle</div><!-- CUSTOMISE -->
+          <div class="comment-src">on the Duolingo collab reel</div><!-- CUSTOMISE -->
+        </div>
+      </div>
+      <div class="comment-text">"This is the funniest branded content I have ever seen. The owl has never felt more real." 😭🔥</div><!-- CUSTOMISE -->
+      <div class="comment-likes">❤️ 4,200 likes</div><!-- CUSTOMISE -->
+    </div>
+
+    <div class="comment-card">
+      <div class="comment-top">
+        <div class="comment-av">B</div>
+        <div>
+          <div class="comment-name">@user_handle</div><!-- CUSTOMISE -->
+          <div class="comment-src">on the Free Fire Max drop</div><!-- CUSTOMISE -->
+        </div>
+      </div>
+      <div class="comment-text">"Bro actually turned the whole internet around on Free Fire. I did NOT see this coming."</div><!-- CUSTOMISE -->
+      <div class="comment-likes">❤️ 11,800 likes</div><!-- CUSTOMISE -->
+    </div>
+
+    <div class="comment-card">
+      <div class="comment-top">
+        <div class="comment-av">C</div>
+        <div>
+          <div class="comment-name">@user_handle</div><!-- CUSTOMISE -->
+          <div class="comment-src">on the Honey Singh Glory rollout</div><!-- CUSTOMISE -->
+        </div>
+      </div>
+      <div class="comment-text">"The campaign felt like a whole cinematic universe. I watched every single asset."</div><!-- CUSTOMISE -->
+      <div class="comment-likes">❤️ 8,500 likes</div><!-- CUSTOMISE -->
+    </div>
+
+    <div class="comment-card">
+      <div class="comment-top">
+        <div class="comment-av">D</div>
+        <div>
+          <div class="comment-name">@user_handle</div><!-- CUSTOMISE -->
+          <div class="comment-src">on the Jeevansathi reels</div><!-- CUSTOMISE -->
+        </div>
+      </div>
+      <div class="comment-text">"Why does this feel like my entire family wrote it 💀 Sharing this immediately."</div><!-- CUSTOMISE -->
+      <div class="comment-likes">❤️ 6,100 likes</div><!-- CUSTOMISE -->
+    </div>
+
+    <div class="comment-card">
+      <div class="comment-top">
+        <div class="comment-av">E</div>
+        <div>
+          <div class="comment-name">@user_handle</div><!-- CUSTOMISE -->
+          <div class="comment-src">on the Under 25 Dictionary reel</div><!-- CUSTOMISE -->
+        </div>
+      </div>
+      <div class="comment-text">"I sent this to my mom to translate for her. She now uses the word 'slay' unironically."</div><!-- CUSTOMISE -->
+      <div class="comment-likes">❤️ 9,300 likes</div><!-- CUSTOMISE -->
+    </div>
+  </div>
+
+  <button class="ncta" onclick="showPage('contact')">Okay, I'm convinced ❤️</button>
+  <button class="backbtn" onclick="showPage('main')" style="margin-top:20px">← Back to profile</button>
+</div>
+
+<script>
+// ============================================================
+// CASE STUDY DATA
+// CUSTOMISE: Edit any field below for each case study.
+// media: true shows image placeholder slots in the modal.
+// ============================================================
+const cases = [
+  {
+    q:"Dating me is like…",
+    title:"Handing Duolingo the algorithm and hoping for the best.",
+    tags:["Social Strategy","Brand Persona","Creator Collabs"],
+    story:"Everyone wanted the Owl to be 'educational.' Boring. I wanted the Owl to be a legal liability. The secret to Duo isn't being an app, it's being a chaotic roommate who hasn't slept in three days and knows your location.",
+    crack:"We leaned into the 'Unhinged' reputation. We collaborated with creators to make Duo a native Desi menace, the kind that threatens your family if you miss a Spanish lesson.",
+    impact:[{n:"500K+",l:"Organic views per drop"},{n:"😨",l:"People don't use it, they fear it"}],
+    result:"People don't just use the app, they fear it. That's brand loyalty.",
+    media:true
+  },
+  {
+    q:"My most controversial opinion…",
+    title:"Free Fire Max hate was just unpaid marketing (opportunity).",
+    tags:["Crisis Comms","Music Video","Meme Marketing"],
+    story:"FreeFire was being cooked. The 'Bade Bhaiya' meme was a weapon used to mock their players. The corporate ask was 'sentiment correction.' I told them to stop being so polite. If the internet is trolling you, don't ignore it, put the trolls on the payroll.",
+    crack:"We turned the mockery into the official anthem. We hired the biggest names in the meme scene (Arpit Bala, Total Gaming), dropped a high-energy music video, and forced the internet to vibe with us.",
+    impact:[{n:"400M+",l:"Cumulative Views"},{n:"↑",l:"Sentiment flipped from hate to hype"}],
+    result:"We didn't just 'correct' the sentiment, we flipped it. We turned the haters into hype-men.",
+    media:true
+  },
+  {
+    q:"Together, we could…",
+    title:"Turn CookieRun India into a creator, not just a game.",
+    tags:["Localisation","Community Building","Content Strategy"],
+    story:"CookieRun wanted to launch a global mascot in India from scratch. Zero context, zero relatability, all eyes on localization.",
+    crack:"We gave the mascot a Desi creator personality instead of translating global content. Sharp, witty, culturally native content made it feel built here.",
+    impact:[{n:"0 to 50K",l:"Followers in 3 months"},{n:"100M+",l:"Views across content"}],
+    result:"A brand that arrived with zero recognition left with a fanbase that felt like they owned it.",
+    media:true
+  },
+  {
+    q:"I won't shut up about…",
+    title:"How I made people feel personally attacked by Jeevansathi content.",
+    tags:["Relatable Content","Matrimony","Organic Growth"],
+    story:"Jeevansathi wanted to feel relevant to a cynical dating generation. Problem: nobody believes in fairytale matrimony content anymore.",
+    crack:"We traded 'fairytale weddings' for the brutally honest, awkward side of Desi matchmaking that everyone thinks but nobody says.",
+    impact:[{n:"2M+",l:"Organic views"},{n:"📈",l:"Collective cringe, monetised"}],
+    result:"We monetised the collective cringe of arranged marriage searches.",
+    media:true
+  },
+  {
+    q:"Biggest risk I've taken…",
+    title:"Trying to write unhinged and witty content for a pharma giant like Lupin Life without crossing the line.",
+    tags:["Pharma","Moment Marketing","Brand Tone"],
+    story:"Pharma is where creativity usually goes to die. Everything is clinical, safe, and skipped. I decided to pivot Lupin to Moment Marketing because being sick doesn't mean you lose your sense of humor.",
+    crack:"If India is talking about a meme or a trend, Lupin has a witty take on it within 2 hours. We turned digestive health into a topical joke.",
+    impact:[{n:"✓",l:"Consistent client praise across multiple brands"},{n:"📤",l:"Medical content people actually shared"}],
+    result:"Medical content that people actually shared.",
+    media:true
+  },
+  {
+    q:"The key to my heart is…",
+    title:"You picking up my lingo, just like the millions who watched Under 25 Dictionary reels.",
+    tags:["Gen Z","Organic Growth","Community"],
+    story:"Under 25 wanted me to 'maintain a high-volume social presence and keep the conversation going,' but I ended up just teaching the elders how to speak in code.",
+    crack:"I treated the socials like a digital dictionary of Gen Z culture. Every post was a 'Mood' or a 'Relatable Struggle' designed specifically for the share button.",
+    impact:[{n:"100K+",l:"Organic views on almost every reel"}],
+    result:"Content so shareable that parents started sending it to their kids, thinking they were cool.",
+    media:true
+  },
+  {
+    q:"My toxic trait…",
+    title:"Treating every launch like it's a Honey Singh comeback.",
+    tags:["Music Campaign","Digital Rollout","Hype Building"],
+    story:"How do you announce the return of the king? You don't 'announce' it, you tease a heist. For Honey Singh's Glory, we ditched the standard promo fluff that people usually skip after 2 seconds.",
+    crack:"We built a dark-mode, high-octane digital rollout that felt like a movie premiere. Every asset was designed to build mystery and satisfy the core fans while grabbing the masses.",
+    impact:[{n:"4M+",l:"Views on the digital rollout assets alone"},{n:"🏆",l:"Glory didn't just drop, it dominated"}],
+    result:"Glory didn't just drop, it dominated.",
+    media:true
+  },
+  {
+    q:"Dating me is like…",
+    title:"Fast, consistent, and actually going somewhere. Ask BGMI (or Bombay Shaving Company 🤷).",
+    tags:["Gaming","D2C","Creator-Native Content"],
+    story:"Whether it was BGMI wanting to 'onboard and scale the biggest name in gaming' or Bombay Shaving Co needing to 'refine their D2C reels,' the answer was the same: stop acting like a brand.",
+    crack:"The focus was 'Creator-Native' execution. Fast pacing, visual punchlines, and zero corporate odor.",
+    impact:[{n:"Millions",l:"Of organic views"},{n:"Hundreds of thousands",l:"Of new followers"}],
+    result:"Millions of organic views and hundreds of thousands of new followers.",
+    media:true
+  },
+  {
+    q:"The dorkiest thing about me is…",
+    title:"I made Bobble AI everyone's digital wingman.",
+    tags:["App Marketing","Social Media","AI Features"],
+    story:"Bobble AI wanted us to 'spread awareness about keyboard AI features,' so I just showed everyone how to win their arguments.",
+    crack:"We marketed the app as the ultimate 'Wingman' focusing on how the AI helps you send the perfect spicy reply and generally be the person everyone else in the chat envies.",
+    impact:[{n:"M+",l:"Views across multiple reels"}],
+    result:"Multiple reels with millions of views.",
+    media:true
+  }
+];
+
+const lbls = ["That's so hot 🔥","Ooh, tell me more ✨","View this one 👀","I like this already 💅","Say less, I'm in 🤌"];
+let li = 0;
+const cur = document.getElementById('cur'), clbl = document.getElementById('clbl');
+
+document.addEventListener('mousemove', e => {
+  cur.style.left = e.clientX + 'px';
+  cur.style.top = e.clientY + 'px';
+  cur.style.opacity = '1';
+  document.querySelectorAll('.pc').forEach(c => {
+    const r = c.getBoundingClientRect();
+    c.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%');
+    c.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%');
+  });
+});
+
+document.querySelectorAll('[data-p]').forEach(c => {
+  c.addEventListener('mouseenter', () => { cur.classList.add('hov'); clbl.textContent = lbls[li++ % lbls.length]; });
+  c.addEventListener('mouseleave', () => cur.classList.remove('hov'));
+});
+
+function showPage(n) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const pg = document.getElementById('page-' + n);
+  if (pg) { pg.classList.add('active'); window.scrollTo(0, 0); }
+}
+
+function openCase(i) {
+  const c = cases[i];
+  document.getElementById('mq').textContent = c.q;
+  document.getElementById('mt').textContent = c.title;
+  document.getElementById('mbody').innerHTML = `
+    <div class="ctags">${c.tags.map(t => `<span class="ctag">${t}</span>`).join('')}</div>
+    ${c.media ? `
+    <div class="media-slots">
+      <div class="media-slot"><div class="media-icon">🎬</div><div class="media-hint">CUSTOMISE: Add image or video in Framer</div></div>
+      <div class="media-slot"><div class="media-icon">📸</div><div class="media-hint">CUSTOMISE: Add image or video in Framer</div></div>
+    </div>` : ''}
+    <div class="csec"><div class="csl">The story</div><div class="cst">${c.story}</div></div>
+    <div class="csec"><div class="csl">The crack</div><div class="cst">${c.crack}</div></div>
+    <div class="csec"><div class="csl">The impact</div>
+      <div class="impact-grid">${c.impact.map(x => `<div class="impact-num"><div class="impact-n">${x.n}</div><div class="impact-l">${x.l}</div></div>`).join('')}</div>
+    </div>
+    <div class="csec"><div class="csl">The result</div><div class="cresult">${c.result}</div></div>
+  `;
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeMod() {
+  document.getElementById('modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal')) closeMod();
+});
+</script>
+</body>
+</html>
